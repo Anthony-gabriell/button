@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Butta — futebol de botão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+/* ===== TOKENS — mesa de botão à noite ===== */
+:root{
+  --feltro:#0d3a23;        /* feltro da mesa */
+  --feltro-fundo:#082818;  /* sombra fora da mesa */
+  --feltro-claro:#155232;  /* áreas elevadas */
+  --cal:#ece8da;           /* linha de cal / texto */
+  --cal-fraca:#b9c4b3;
+  --ouro:#e8b33c;          /* ação primária / lendário */
+  --ouro-escuro:#9c7218;
+  --alerta:#d6453a;
+  --r-comum:#8d978d; --r-raro:#4fa3d1; --r-epico:#a96fd6; --r-lendario:#e8b33c;
+  --raio:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Archivo',system-ui,sans-serif;
+  background:
+    radial-gradient(ellipse at 50% -10%, #14502f 0%, var(--feltro) 45%, var(--feltro-fundo) 100%);
+  color:var(--cal); min-height:100dvh;
+}
+.display{font-family:'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--ouro)}
+
+#app{max-width:520px;margin:0 auto;padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
+
+/* ===== Cabeçalho ===== */
+header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+header h1{font-size:1.7rem;color:var(--cal)}
+header h1 span{color:var(--ouro)}
+header small{color:var(--cal-fraca);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase}
+
+/* ===== Campo (slots) ===== */
+.campo{
+  position:relative;border-radius:var(--raio);
+  background:linear-gradient(180deg,#11452a 0%,#0c3520 100%);
+  border:2px solid rgba(236,232,218,.35);
+  aspect-ratio:10/8.5; margin-bottom:12px; overflow:hidden;
+}
+/* linhas de cal */
+.campo::before{content:"";position:absolute;inset:8px;border:1.5px solid rgba(236,232,218,.28);border-radius:8px;pointer-events:none}
+.campo::after{content:"";position:absolute;left:50%;top:8px;bottom:8px;width:0;border-left:1.5px solid rgba(236,232,218,0);pointer-events:none}
+.area{position:absolute;left:25%;right:25%;height:13%;border:1.5px solid rgba(236,232,218,.25);pointer-events:none}
+.area.cima{top:8px;border-top:none}.area.baixo{bottom:8px;border-bottom:none}
+.circulo-central{position:absolute;left:50%;top:50%;width:26%;aspect-ratio:1;transform:translate(-50%,-50%);border:1.5px solid rgba(236,232,218,.22);border-radius:50%;pointer-events:none}
+
+.slot{position:absolute;transform:translate(-50%,-50%);width:15.5%;cursor:pointer;transition:transform .12s}
+.slot:active{transform:translate(-50%,-50%) scale(.92)}
+.slot svg{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+.slot .vazio{
+  width:100%;aspect-ratio:1;border-radius:50%;
+  border:2px dashed rgba(236,232,218,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.62rem;font-weight:700;color:rgba(236,232,218,.55);letter-spacing:.06em;
+  background:rgba(0,0,0,.18);
+}
+.slot .nome-mini{font-size:.55rem;text-align:center;margin-top:3px;color:var(--cal-fraca);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== Orçamento ===== */
+.orcamento{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.orcamento .barra{flex:1;height:10px;border-radius:6px;background:rgba(0,0,0,.35);overflow:hidden}
+.orcamento .barra i{display:block;height:100%;background:var(--ouro);border-radius:6px;transition:width .25s,background .25s}
+.orcamento .barra i.estourou{background:var(--alerta)}
+.orcamento b{font-variant-numeric:tabular-nums;font-size:.85rem;min-width:86px;text-align:right}
+
+/* ===== Botão jogar ===== */
+.btn{
+  display:block;width:100%;padding:15px;border:none;border-radius:var(--raio);
+  font-family:'Archivo Black',sans-serif;font-size:1.05rem;text-transform:uppercase;letter-spacing:.06em;
+  background:linear-gradient(180deg,var(--ouro),var(--ouro-escuro));color:#241a05;cursor:pointer;
+  box-shadow:0 4px 0 #6e5010, 0 8px 16px rgba(0,0,0,.35);
+}
+.btn:disabled{filter:grayscale(.8) brightness(.75);box-shadow:none;cursor:not-allowed}
+.btn:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 #6e5010}
+.btn.fantasma{background:none;color:var(--cal);box-shadow:none;border:1.5px solid rgba(236,232,218,.4);font-size:.85rem;padding:12px}
+
+/* ===== Pool ===== */
+.filtros{display:flex;gap:6px;margin:16px 0 10px}
+.filtros button{
+  flex:1;padding:9px 0;border-radius:10px;border:1.5px solid rgba(236,232,218,.3);
+  background:none;color:var(--cal-fraca);font-weight:700;font-size:.78rem;letter-spacing:.06em;cursor:pointer;
+}
+.filtros button.ativo{background:var(--cal);color:var(--feltro-fundo);border-color:var(--cal)}
+.pool{display:flex;flex-direction:column;gap:8px}
+.carta{
+  display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:12px;
+  background:rgba(0,0,0,.24);border:1px solid rgba(236,232,218,.12);cursor:pointer;
+}
+.carta:active{background:rgba(0,0,0,.4)}
+.carta.indisponivel{opacity:.38;pointer-events:none}
+.carta svg{width:44px;flex:none}
+.carta .info{flex:1;min-width:0}
+.carta .info b{display:block;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carta .info span{font-size:.7rem;color:var(--cal-fraca);letter-spacing:.05em}
+.carta .preco{text-align:right;flex:none}
+.carta .preco b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.carta .preco span{font-size:.62rem;color:var(--cal-fraca);text-transform:uppercase;letter-spacing:.08em}
+
+/* ===== Telas (state machine) ===== */
+.tela{display:none}
+.tela.ativa{display:block;animation:entrar .25s ease}
+@keyframes entrar{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== VS / Replay ===== */
+.vs-card{
+  border-radius:var(--raio);background:rgba(0,0,0,.3);border:1px solid rgba(236,232,218,.15);
+  padding:20px 16px;text-align:center;margin-bottom:14px;
+}
+.vs-card .fase{margin-bottom:14px}
+.vs-times{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vs-times .time{flex:1;min-width:0}
+.vs-times .time b{display:block;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs-times .time span{font-size:.7rem;color:var(--cal-fraca)}
+.vs-x{font-family:'Archivo Black';font-size:1.5rem;color:var(--ouro)}
+
+.placar{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px 0 4px}
+.placar .gols{font-family:'Archivo Black';font-size:3.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.placar .relogio{
+  font-variant-numeric:tabular-nums;font-weight:700;font-size:.95rem;color:var(--feltro-fundo);
+  background:var(--cal);border-radius:8px;padding:4px 10px;min-width:52px;
+}
+.momentum{height:7px;border-radius:4px;background:linear-gradient(90deg,var(--ouro) 50%,rgba(236,232,218,.25) 50%);margin:14px 0 4px;transition:background .4s}
+
+.feed{display:flex;flex-direction:column-reverse;gap:7px;min-height:150px;margin-top:12px}
+.evento{
+  display:flex;gap:10px;align-items:baseline;padding:8px 12px;border-radius:10px;
+  background:rgba(0,0,0,.26);font-size:.84rem;animation:entrar .3s ease;
+}
+.evento .min{font-variant-numeric:tabular-nums;font-weight:700;color:var(--cal-fraca);flex:none;width:30px}
+.evento.gol{background:rgba(232,179,60,.16);border:1px solid rgba(232,179,60,.5)}
+.evento.gol .min{color:var(--ouro)}
+.evento.cartao{border-left:3px solid var(--alerta)}
+
+.flash-gol{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(8,40,24,.88);z-index:50;animation:flash 1.2s ease forwards;pointer-events:none;
+}
+.flash-gol b{font-family:'Archivo Black';font-size:clamp(2.6rem,14vw,4.5rem);color:var(--ouro);
+  text-shadow:0 4px 0 rgba(0,0,0,.4);transform:rotate(-4deg)}
+@keyframes flash{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+
+/* ===== Fim de campanha ===== */
+.fim{text-align:center;padding:26px 0 8px}
+.fim .trofeu{font-size:4rem;line-height:1;margin-bottom:8px}
+.fim h2{font-size:1.6rem;margin-bottom:6px}
+.fim p{color:var(--cal-fraca);font-size:.9rem;margin-bottom:4px}
+.fim .score{font-family:'Archivo Black';font-size:3rem;color:var(--ouro);margin:10px 0 2px}
+.fim .score-label{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cal-fraca);margin-bottom:20px}
+.acoes{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+canvas{display:none}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 class="display">But<span>ta</span></h1>
+    <small>futebol de botão</small>
+  </header>
+
+  <!-- ============ TELA: MONTAGEM ============ -->
+  <section id="tela-montagem" class="tela ativa">
+    <p class="eyebrow" style="margin-bottom:8px">Escale 11 botões · formação 4-3-3</p>
+    <div class="campo" id="campo">
+      <div class="area cima"></div><div class="area baixo"></div><div class="circulo-central"></div>
+    </div>
+    <div class="orcamento">
+      <div class="barra"><i id="barra-gasto" style="width:0%"></i></div>
+      <b><span id="gasto">0</span>/<span id="orc-total">1100</span> pts</b>
+    </div>
+    <button class="btn" id="btn-jogar" disabled>Complete o time</button>
+
+    <div class="filtros" id="filtros">
+      <button data-f="TODOS" class="ativo">Todos</button>
+      <button data-f="GOL">GOL</button>
+      <button data-f="DEF">DEF</button>
+      <button data-f="MEI">MEI</button>
+      <button data-f="ATA">ATA</button>
+    </div>
+    <div class="pool" id="pool"></div>
+  </section>
+
+  <!-- ============ TELA: PARTIDA ============ -->
+  <section id="tela-partida" class="tela">
+    <div class="vs-card">
+      <p class="eyebrow fase" id="fase-nome">OITAVAS</p>
+      <div class="vs-times">
+        <div class="time"><b id="nome-casa"></b><span id="ovr-casa"></span></div>
+        <div class="placar">
+          <span class="gols" id="gols-casa">0</span>
+          <span class="relogio" id="relogio">0'</span>
+          <span class="gols" id="gols-fora">0</span>
+        </div>
+        <div class="time"><b id="nome-fora"></b><span id="ovr-fora"></span></div>
+      </div>
+      <div class="momentum" id="momentum"></div>
+    </div>
+    <div class="feed" id="feed"></div>
+    <button class="btn fantasma" id="btn-pular" style="margin-top:14px">Pular para o fim ⏩</button>
+    <button class="btn" id="btn-proxima" style="display:none;margin-top:14px">Próxima fase →</button>
+  </section>
+
+  <!-- ============ TELA: FIM ============ -->
+  <section id="tela-fim" class="tela">
+    <div class="fim">
+      <div class="trofeu" id="fim-icone">🏆</div>
+      <h2 class="display" id="fim-titulo">Campeão!</h2>
+      <p id="fim-sub"></p>
+      <div class="score" id="fim-score">0</div>
+      <div class="score-label">pontos de campanha</div>
+      <div class="acoes">
+        <button class="btn" id="btn-share">Compartilhar campanha 📲</button>
+        <button class="btn fantasma" id="btn-denovo">Montar outro time</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<canvas id="share-canvas" width="1080" height="1080"></canvas>
+
+<script>
+/* =====================================================================
+   BUTTA — frontend vanilla. Estado simples, três telas, zero framework.
+   O servidor Go é a fonte de verdade: aqui só montamos IDs e tocamos
+   o "replay" da lista de eventos que a API devolve.
+===================================================================== */
+const API = ""; // mesmo origin (servido pelo binário Go)
+
+const FORMACAO = ["GOL","DEF","DEF","DEF","DEF","MEI","MEI","MEI","ATA","ATA","ATA"];
+// posição (x%, y%) de cada slot no campo, ataque pra cima
+const SLOT_POS = [
+  [50,88],                      // GOL
+  [16,68],[39,72],[61,72],[84,68], // DEF
+  [25,47],[50,52],[75,47],         // MEI
+  [22,22],[50,16],[78,22],         // ATA
+];
+const CORES_PAIS = {
+  "Brasil":["#ffd700","#009b3a"], "Argentina":["#74acdf","#f6f6f6"], "França":["#0055a4","#ef4135"],
+  "Alemanha":["#1a1a1a","#dd0000"], "Espanha":["#aa151b","#f1bf00"], "Inglaterra":["#f6f6f6","#cf081f"],
+  "Portugal":["#006600","#ff0000"], "Itália":["#009246","#ce2b37"], "Holanda":["#ff7f00","#f6f6f6"],
+  "Uruguai":["#7cb9e8","#1a1a1a"], "Croácia":["#ff0000","#f6f6f6"], "Marrocos":["#c1272d","#006233"],
+  "Japão":["#f6f6f6","#bc002d"], "México":["#006847","#ce1126"], "EUA":["#3c3b6e","#b22234"], "Bélgica":["#1a1a1a","#fdda24"],
+};
+const COR_RARIDADE = {COMUM:"#8d978d", RARO:"#4fa3d1", EPICO:"#a96fd6", LENDARIO:"#e8b33c"};
+const reduzMov = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let pool = [], budget = 1100;
+let slots = Array(11).fill(null);   // Button ou null por posição da formação
+let campanha = null, partidaAtual = 0;
+let replayTimer = null;
+
+const $ = id => document.getElementById(id);
+
+/* ===== Botão SVG procedural — o elemento-assinatura ===== */
+function svgBotao(b, tam=64){
+  const [c1,c2] = CORES_PAIS[b.country] || ["#888","#ccc"];
+  const anel = COR_RARIDADE[b.rarity] || "#8d978d";
+  const sigla = b.country.slice(0,3).toUpperCase();
+  return `
+  <svg viewBox="0 0 100 100" width="${tam}" height="${tam}" role="img" aria-label="${b.name}">
+    <defs>
+      <radialGradient id="g${b.id}" cx="35%" cy="30%">
+        <stop offset="0%" stop-color="${c2}"/>
+        <stop offset="55%" stop-color="${c1}"/>
+        <stop offset="100%" stop-color="${escurece(c1)}"/>
+      </radialGradient>
+    </defs>
+    <circle cx="50" cy="50" r="48" fill="${anel}"/>
+    <circle cx="50" cy="50" r="42" fill="url(#g${b.id})"/>
+    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>
+    <ellipse cx="38" cy="30" rx="16" ry="9" fill="rgba(255,255,255,.35)"/>
+    <text x="50" y="47" text-anchor="middle" font-family="Archivo Black" font-size="22"
+      fill="#fff" stroke="rgba(0,0,0,.55)" stroke-width="2.5" paint-order="stroke">${sigla}</text>
+    <text x="50" y="74" text-anchor="middle" font-family="Archivo Black" font-size="20"
+      fill="${anel === '#e8b33c' ? '#ffe9b0' : '#fff'}" stroke="rgba(0,0,0,.55)" stroke-width="2.5" paint-order="stroke">${b.rating}</text>
+  </svg>`;
+}
+function escurece(hex){
+  const n = parseInt(hex.slice(1),16);
+  const f = c => Math.max(0, c-70);
+  return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`;
+}
+
+/* ===== Montagem ===== */
+async function carregaPool(){
+  const r = await fetch(API + "/api/pool");
+  const d = await r.json();
+  pool = d.pool; budget = d.budget;
+  $("orc-total").textContent = budget;
+  pool.sort((a,b)=>b.rating-a.rating);
+  renderCampo(); renderPool("TODOS");
+}
+
+function gasto(){ return slots.reduce((s,b)=>s+(b?b.price:0),0); }
+function slotLivre(pos){ return FORMACAO.findIndex((p,i)=>p===pos && !slots[i]); }
+
+function renderCampo(){
+  const campo = $("campo");
+  campo.querySelectorAll(".slot").forEach(e=>e.remove());
+  FORMACAO.forEach((pos,i)=>{
+    const el = document.createElement("div");
+    el.className = "slot";
+    el.style.left = SLOT_POS[i][0]+"%";
+    el.style.top  = SLOT_POS[i][1]+"%";
+    const b = slots[i];
+    el.innerHTML = b
+      ? svgBotao(b,72) + `<div class="nome-mini">${b.name.split(" do ")[0]}</div>`
+      : `<div class="vazio">${pos}</div>`;
+    el.onclick = ()=>{ if(slots[i]){ slots[i]=null; atualiza(); } };
+    campo.appendChild(el);
+  });
+}
+
+function renderPool(filtro){
+  const lista = $("pool");
+  lista.innerHTML = "";
+  const g = gasto(), faltam = slots.filter(s=>!s).length;
+  pool.filter(b=>filtro==="TODOS"||b.position===filtro).forEach(b=>{
+    const escalado = slots.some(s=>s && s.id===b.id);
+    const semSlot = slotLivre(b.position) === -1;
+    const semGrana = g + b.price > budget;
+    const el = document.createElement("div");
+    el.className = "carta" + ((escalado||semSlot||semGrana) ? " indisponivel" : "");
+    el.innerHTML = `
+      ${svgBotao(b,44)}
+      <div class="info"><b>${b.name}</b><span>${b.position} · ${b.rarity}</span></div>
+      <div class="preco"><b>${b.price}</b><span>pts</span></div>`;
+    el.onclick = ()=>{
+      const i = slotLivre(b.position);
+      if(i===-1 || gasto()+b.price>budget) return;
+      slots[i] = b; atualiza();
+    };
+    lista.appendChild(el);
+  });
+}
+
+function atualiza(){
+  renderCampo();
+  const f = document.querySelector(".filtros .ativo").dataset.f;
+  renderPool(f);
+  const g = gasto(), completos = slots.every(Boolean);
+  $("gasto").textContent = g;
+  const barra = $("barra-gasto");
+  barra.style.width = Math.min(100, g/budget*100)+"%";
+  barra.classList.toggle("estourou", g>budget);
+  const btn = $("btn-jogar");
+  btn.disabled = !completos || g>budget;
+  btn.textContent = completos ? (g>budget ? "Estourou o orçamento" : "Jogar o mata-mata ⚽")
+                              : `Faltam ${slots.filter(s=>!s).length} botões`;
+}
+
+$("filtros").onclick = e=>{
+  if(e.target.dataset.f === undefined) return;
+  document.querySelectorAll(".filtros button").forEach(b=>b.classList.remove("ativo"));
+  e.target.classList.add("ativo");
+  renderPool(e.target.dataset.f);
+};
+
+/* ===== Jogar ===== */
+$("btn-jogar").onclick = async ()=>{
+  $("btn-jogar").disabled = true;
+  const r = await fetch(API + "/api/play", {
+    method:"POST",
+    body: JSON.stringify({team_name:"Meu Time", button_ids: slots.map(b=>b.id)}),
+  });
+  if(!r.ok){ const e = await r.json(); alert(e.error || "Não deu pra jogar. Tente de novo."); atualiza(); return; }
+  campanha = await r.json();
+  partidaAtual = 0;
+  mostraTela("tela-partida");
+  tocaPartida(0);
+};
+
+function mostraTela(id){
+  document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));
+  $(id).classList.add("ativa");
+  scrollTo({top:0});
+}
+
+/* ===== Replay da partida =====
+   O backend manda a lista de eventos pronta; aqui o relógio acelera
+   de 0' a 90' (~20s) e cada evento entra quando seu minuto chega. */
+const FASES = ["OITAVAS","QUARTAS","SEMIFINAL","FINAL"];
+
+function tocaPartida(i){
+  const m = campanha.matches[i];
+  $("fase-nome").textContent = FASES[i] || "";
+  $("nome-casa").textContent = m.home_team;
+  $("nome-fora").textContent = m.away_team;
+  $("ovr-casa").textContent = "OVR " + m.home_ovr;
+  $("ovr-fora").textContent = "OVR " + m.away_ovr;
+  $("gols-casa").textContent = "0"; $("gols-fora").textContent = "0";
+  $("feed").innerHTML = "";
+  $("btn-proxima").style.display = "none";
+  $("btn-pular").style.display = "block";
+
+  let minuto = 0, idx = 0, casa = 0, fora = 0;
+  const eventos = m.events;
+
+  function fim(){
+    clearInterval(replayTimer);
+    $("relogio").textContent = "90'";
+    $("gols-casa").textContent = m.home_goals;
+    $("gols-fora").textContent = m.away_goals;
+    if(m.penalties) addEvento({minute:90,type:"GOL",team:m.winner,detail:`${m.winner} vence nos pênaltis!`});
+    $("btn-pular").style.display = "none";
+    const venceu = m.winner === m.home_team;
+    const ultima = i === campanha.matches.length - 1;
+    if(!ultima && venceu){
+      $("btn-proxima").style.display = "block";
+      $("btn-proxima").onclick = ()=>tocaPartida(++partidaAtual);
+    } else {
+      $("btn-proxima").style.display = "block";
+      $("btn-proxima").textContent = "Ver resultado da campanha →";
+      $("btn-proxima").onclick = telaFim;
+    }
+  }
+
+  function tick(){
+    minuto++;
+    $("relogio").textContent = minuto + "'";
+    $("momentum").style.background =
+      `linear-gradient(90deg, var(--ouro) ${48 + Math.sin(minuto/6)*22 + (casa-fora)*6}%, rgba(236,232,218,.25) 0)`;
+    while(idx < eventos.length && eventos[idx].minute <= minuto){
+      const ev = eventos[idx++];
+      if(ev.type === "GOL"){
+        ev.team === m.home_team ? casa++ : fora++;
+        $("gols-casa").textContent = casa; $("gols-fora").textContent = fora;
+        if(!reduzMov) flashGol();
+      }
+      if(ev.type !== "APITO") addEvento(ev);
+    }
+    if(minuto >= 90) fim();
+  }
+
+  if(reduzMov){ // acessibilidade: sem animação, resultado direto
+    eventos.filter(e=>e.type!=="APITO").forEach(addEvento);
+    fim(); return;
+  }
+  clearInterval(replayTimer);
+  replayTimer = setInterval(tick, 210); // 90 min ≈ 19s
+  $("btn-pular").onclick = ()=>{ while(minuto<90) tick(); };
+}
+
+function addEvento(ev){
+  const el = document.createElement("div");
+  const classe = ev.type==="GOL" ? "gol" : ev.type==="CARTAO" ? "cartao" : "";
+  el.className = "evento " + classe;
+  el.innerHTML = `<span class="min">${ev.minute}'</span><span>${ev.detail}${ev.actor && ev.type!=="GOL" ? " — "+ev.actor : ""}</span>`;
+  $("feed").appendChild(el);
+}
+
+function flashGol(){
+  const f = document.createElement("div");
+  f.className = "flash-gol";
+  f.innerHTML = "<b>GOOOL!</b>";
+  document.body.appendChild(f);
+  setTimeout(()=>f.remove(), 1200);
+}
+
+/* ===== Fim de campanha ===== */
+function telaFim(){
+  const c = campanha;
+  $("fim-icone").textContent = c.champion ? "🏆" : "💔";
+  $("fim-titulo").textContent = c.champion ? "Campeão!" : "Eliminado";
+  $("fim-sub").textContent = c.champion
+    ? "Seu time levantou a taça do mata-mata."
+    : `A campanha parou na fase: ${c.stage_out}.`;
+  $("fim-score").textContent = c.score;
+  mostraTela("tela-fim");
+}
+
+$("btn-denovo").onclick = ()=>{
+  slots = Array(11).fill(null); campanha = null;
+  atualiza(); mostraTela("tela-montagem");
+};
+
+/* ===== Card de share (canvas → imagem pro WhatsApp) ===== */
+$("btn-share").onclick = async ()=>{
+  const cv = $("share-canvas"), x = cv.getContext("2d");
+  const c = campanha;
+  // fundo feltro
+  const grad = x.createRadialGradient(540,300,100,540,540,900);
+  grad.addColorStop(0,"#14502f"); grad.addColorStop(1,"#082818");
+  x.fillStyle = grad; x.fillRect(0,0,1080,1080);
+  // moldura de cal
+  x.strokeStyle = "rgba(236,232,218,.5)"; x.lineWidth = 6;
+  x.strokeRect(40,40,1000,1000);
+  x.textAlign = "center"; x.fillStyle = "#ece8da";
+  x.font = "900 92px 'Archivo Black', sans-serif";
+  x.fillText("BUTTA", 540, 170);
+  x.font = "700 34px Archivo, sans-serif"; x.fillStyle = "#b9c4b3";
+  x.fillText("FUTEBOL DE BOTÃO", 540, 220);
+  x.font = "120px serif";
+  x.fillText(c.champion ? "🏆" : "💔", 540, 400);
+  x.fillStyle = "#ece8da"; x.font = "900 72px 'Archivo Black'";
+  x.fillText(c.champion ? "CAMPEÃO!" : "ELIMINADO NA " + c.stage_out, 540, 510);
+  x.fillStyle = "#e8b33c"; x.font = "900 160px 'Archivo Black'";
+  x.fillText(c.score, 540, 700);
+  x.fillStyle = "#b9c4b3"; x.font = "700 32px Archivo";
+  x.fillText("PONTOS DE CAMPANHA", 540, 750);
+  // botões do time desenhados como discos
+  const time = slots.filter(Boolean);
+  time.forEach((b,i)=>{
+    const px = 150 + i*73, py = 860;
+    const [c1] = CORES_PAIS[b.country] || ["#888"];
+    x.beginPath(); x.arc(px,py,32,0,7); x.fillStyle = COR_RARIDADE[b.rarity]; x.fill();
+    x.beginPath(); x.arc(px,py,26,0,7); x.fillStyle = c1; x.fill();
+    x.fillStyle = "#fff"; x.font = "900 22px 'Archivo Black'";
+    x.fillText(b.rating, px, py+8);
+  });
+  x.fillStyle = "#e8b33c"; x.font = "700 30px Archivo";
+  x.fillText("Monte o seu: butta.gg", 540, 990);
+
+  cv.toBlob(async blob=>{
+    const file = new File([blob], "butta-campanha.png", {type:"image/png"});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:"Minha campanha no Butta"}); return; }catch(e){}
+    }
+    const a = document.createElement("a"); // fallback: download
+    a.href = URL.createObjectURL(blob); a.download = "butta-campanha.png"; a.click();
+  });
+};
+
+carregaPool();
+</script>
+</body>
+</html>
